@@ -75,33 +75,3 @@ def save_protected_numbers(protected_numbers):
     except Exception as e:
         print(f"❌ Error saving to GitHub: {e}")
         return False
-
-# Alternative simple file-based storage (fallback)
-def load_protected_numbers_local():
-    """
-    Load protected numbers from local file (fallback)
-    """
-    protected_numbers = set()
-    try:
-        if os.path.exists('protected_numbers.json'):
-            with open('protected_numbers.json', 'r') as f:
-                numbers_list = json.load(f)
-                protected_numbers = set(numbers_list)
-            print(f"✅ Loaded {len(protected_numbers)} protected numbers from local file")
-    except Exception as e:
-        print(f"❌ Error loading from local file: {e}")
-    return protected_numbers
-
-def save_protected_numbers_local(protected_numbers):
-    """
-    Save protected numbers to local file (fallback)
-    """
-    try:
-        numbers_list = list(protected_numbers)
-        with open('protected_numbers.json', 'w') as f:
-            json.dump(numbers_list, f, indent=2)
-        print(f"✅ Saved {len(protected_numbers)} protected numbers to local file")
-        return True
-    except Exception as e:
-        print(f"❌ Error saving to local file: {e}")
-        return False
