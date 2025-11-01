@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, session
+from flask_cors import CORS
 import requests
 import threading
 import time
@@ -39,6 +40,26 @@ except ImportError:
             return False
 
 app = Flask(__name__)
+
+# Automatic CORS configuration for Netlify and localhost
+def cors_origin_check(origin):
+    """Automatically allow Netlify domains and localhost"""
+    if not origin:
+        return True  # Allow requests without Origin header
+    
+    # Allow all Netlify domains
+    if any(origin.endswith(domain) for domain in ['.netlify.app', '.netlify.com']):
+        return True
+    
+    # Allow all localhost variations
+    if any(origin.startswith(prefix) for prefix in ['http://localhost', 'http://127.0.0.1', 'http://0.0.0.0']):
+        return True
+    
+    return False
+
+# Configure CORS with automatic origin checking
+CORS(app, origins=cors_origin_check, supports_credentials=True)
+
 app.secret_key = os.environ.get('SECRET_KEY', 'sms-bomber-secret-key-2024')
 
 # Global storage for protected numbers
@@ -181,13 +202,23 @@ def get_user_id():
         session['user_id'] = str(uuid.uuid4())
     return session['user_id']
 
+@app.route('/')
+def home():
+    return jsonify({
+        'message': 'SMS Bomber Pro API',
+        'status': 'running',
+        'version': '2.0'
+    })
+
 @app.route('/api/health', methods=['GET'])
 def health_check():
     return jsonify({
         'status': 'healthy',
         'timestamp': datetime.now().isoformat(),
         'protected_numbers_count': len(protected_numbers),
-        'active_sessions': len(user_sessions)
+        'active_sessions': len(user_sessions),
+        'cors_enabled': True,
+        'netlify_support': True
     })
 
 @app.route('/api/has_active_session', methods=['GET'])
@@ -329,12 +360,13 @@ def clear_protected_numbers():
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 4747))
-    print("=" * 50)
+    print("=" * 60)
     print("🚀 SMS Bomber Pro API Starting...")
     print(f"📍 Port: {port}")
     print(f"🌐 Bombing API: {BOMBING_API_URL}")
     print(f"📱 Protected Numbers: {len(protected_numbers)}")
     print("🔓 Authentication: DISABLED")
+    print("🌍 CORS: ENABLED (Auto-detects Netlify & localhost)")
     print("🤖 GitHub Auto-Save: ENABLED")
-    print("=" * 50)
+    print("=" * 60)
     app.run(host='0.0.0.0', port=port, debug=False)
