@@ -7,7 +7,36 @@ import os
 import uuid
 import re
 from datetime import datetime
-from github_storage import load_protected_numbers, save_protected_numbers
+
+# Try to import GitHub storage, fallback to local storage
+try:
+    from github_storage import load_protected_numbers, save_protected_numbers
+    print("✅ Using GitHub storage")
+except ImportError:
+    print("⚠️  GitHub storage not available, using local storage")
+    # Fallback functions
+    def load_protected_numbers():
+        protected_numbers = set()
+        try:
+            if os.path.exists('protected_numbers.json'):
+                with open('protected_numbers.json', 'r') as f:
+                    numbers_list = json.load(f)
+                    protected_numbers = set(numbers_list)
+                print(f"✅ Loaded {len(protected_numbers)} protected numbers from local file")
+        except Exception as e:
+            print(f"❌ Error loading from local file: {e}")
+        return protected_numbers
+    
+    def save_protected_numbers(protected_numbers):
+        try:
+            numbers_list = list(protected_numbers)
+            with open('protected_numbers.json', 'w') as f:
+                json.dump(numbers_list, f, indent=2)
+            print(f"✅ Saved {len(protected_numbers)} protected numbers to local file")
+            return True
+        except Exception as e:
+            print(f"❌ Error saving to local file: {e}")
+            return False
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'sms-bomber-secret-key-2024')
@@ -22,11 +51,11 @@ user_sessions = {}
 HCAPTCHA_SECRET_KEY = "ES_595b1aa25093495f9374ddb1a010134f"
 HCAPTCHA_SITE_KEY = "652c20cc-4e0c-486e-9cc4-d61a1d186b80"
 
-# Bombing API Configuration - UPDATED URL
+# Bombing API Configuration
 BOMBING_API_URL = "https://drk-venom.sevalla.app/bomb"
 
 # Load protected numbers when server starts
-load_protected_numbers()
+protected_numbers = load_protected_numbers()
 
 class BombingSession:
     def __init__(self, phone_number, user_id):
@@ -275,7 +304,7 @@ def protect_number():
             return jsonify({'success': False, 'error': 'Invalid phone number format'})
         
         protected_numbers.add(base_number)
-        save_protected_numbers()  # This now auto-saves to GitHub!
+        save_protected_numbers(protected_numbers)
         
         return jsonify({'success': True, 'message': f'Number {base_number} protected successfully'})
     
@@ -293,7 +322,7 @@ def get_protected_numbers():
 def clear_protected_numbers():
     try:
         protected_numbers.clear()
-        save_protected_numbers()
+        save_protected_numbers(protected_numbers)
         return jsonify({'success': True, 'message': 'All protected numbers cleared'})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
