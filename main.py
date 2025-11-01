@@ -41,12 +41,19 @@ except ImportError:
 
 app = Flask(__name__)
 
-# SIMPLE CORS CONFIGURATION - FIXED
+# CORS CONFIGURATION FOR ALL PORTS
 CORS(app, origins=[
-    "http://localhost:3000",
-    "http://localhost:5000",
-    "http://127.0.0.1:3000", 
-    "http://127.0.0.1:5000",
+    # All localhost variations with any port
+    "http://localhost",
+    "http://localhost:*",
+    "http://127.0.0.1", 
+    "http://127.0.0.1:*",
+    "http://0.0.0.0",
+    "http://0.0.0.0:*",
+    "http://localhost:7700",  # Your specific port
+    "http://127.0.0.1:7700",  # Your specific port
+    
+    # All Netlify domains
     "https://*.netlify.app",
     "https://*.netlify.com"
 ])
@@ -199,7 +206,8 @@ def home():
         'message': 'SMS Bomber Pro API',
         'status': 'running',
         'version': '2.0',
-        'cors_enabled': True
+        'cors_enabled': True,
+        'supported_origins': 'All localhost ports + Netlify'
     })
 
 @app.route('/api/health', methods=['GET'])
@@ -208,7 +216,8 @@ def health_check():
         'status': 'healthy',
         'timestamp': datetime.now().isoformat(),
         'protected_numbers_count': len(protected_numbers),
-        'active_sessions': len(user_sessions)
+        'active_sessions': len(user_sessions),
+        'cors_support': 'All localhost ports + Netlify domains'
     })
 
 @app.route('/api/has_active_session', methods=['GET'])
@@ -356,7 +365,8 @@ if __name__ == '__main__':
     print(f"🌐 Bombing API: {BOMBING_API_URL}")
     print(f"📱 Protected Numbers: {len(protected_numbers)}")
     print("🔓 Authentication: DISABLED")
-    print("🌍 CORS: ENABLED (Netlify & localhost)")
+    print("🌍 CORS: ENABLED (ALL localhost ports + Netlify)")
+    print("🔧 Port 7700: SUPPORTED")
     print("🤖 GitHub Auto-Save: ENABLED")
     print("=" * 60)
     app.run(host='0.0.0.0', port=port, debug=False)
