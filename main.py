@@ -41,24 +41,15 @@ except ImportError:
 
 app = Flask(__name__)
 
-# Automatic CORS configuration for Netlify and localhost
-def cors_origin_check(origin):
-    """Automatically allow Netlify domains and localhost"""
-    if not origin:
-        return True  # Allow requests without Origin header
-    
-    # Allow all Netlify domains
-    if any(origin.endswith(domain) for domain in ['.netlify.app', '.netlify.com']):
-        return True
-    
-    # Allow all localhost variations
-    if any(origin.startswith(prefix) for prefix in ['http://localhost', 'http://127.0.0.1', 'http://0.0.0.0']):
-        return True
-    
-    return False
-
-# Configure CORS with automatic origin checking
-CORS(app, origins=cors_origin_check, supports_credentials=True)
+# SIMPLE CORS CONFIGURATION - FIXED
+CORS(app, origins=[
+    "http://localhost:3000",
+    "http://localhost:5000",
+    "http://127.0.0.1:3000", 
+    "http://127.0.0.1:5000",
+    "https://*.netlify.app",
+    "https://*.netlify.com"
+])
 
 app.secret_key = os.environ.get('SECRET_KEY', 'sms-bomber-secret-key-2024')
 
@@ -207,7 +198,8 @@ def home():
     return jsonify({
         'message': 'SMS Bomber Pro API',
         'status': 'running',
-        'version': '2.0'
+        'version': '2.0',
+        'cors_enabled': True
     })
 
 @app.route('/api/health', methods=['GET'])
@@ -216,9 +208,7 @@ def health_check():
         'status': 'healthy',
         'timestamp': datetime.now().isoformat(),
         'protected_numbers_count': len(protected_numbers),
-        'active_sessions': len(user_sessions),
-        'cors_enabled': True,
-        'netlify_support': True
+        'active_sessions': len(user_sessions)
     })
 
 @app.route('/api/has_active_session', methods=['GET'])
@@ -366,7 +356,7 @@ if __name__ == '__main__':
     print(f"🌐 Bombing API: {BOMBING_API_URL}")
     print(f"📱 Protected Numbers: {len(protected_numbers)}")
     print("🔓 Authentication: DISABLED")
-    print("🌍 CORS: ENABLED (Auto-detects Netlify & localhost)")
+    print("🌍 CORS: ENABLED (Netlify & localhost)")
     print("🤖 GitHub Auto-Save: ENABLED")
     print("=" * 60)
     app.run(host='0.0.0.0', port=port, debug=False)
